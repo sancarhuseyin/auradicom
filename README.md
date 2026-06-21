@@ -18,6 +18,18 @@ If you want to view, manage, and scan your DICOM files—your private personal d
 
 ---
 
+## 📸 Interface Screenshots & Gallery
+
+Here are mockups of the AuraDICOM viewer interface displaying medical scans with local AI-detected anomalies:
+
+### 1. Spine CT View with Localized Density Outlier
+![AuraDICOM Spine CT Interface](docs/images/viewer_interface_main.jpg)
+
+### 2. Chest X-Ray View with AI Lung Nodule Overlay
+![AuraDICOM Chest X-Ray Interface](docs/images/viewer_interface_xray.jpg)
+
+---
+
 ## ✨ Features
 
 * **Left Sidebar (Study Browser)**: Automatically index local scan directories recursively and group them into a clear structure (**Patient ➔ Study ➔ Series ➔ Modality & Slice Count**). Includes instant search filtering.
