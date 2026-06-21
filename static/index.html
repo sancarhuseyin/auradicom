@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraDICOM - Medical Image Viewer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme tags-collapsed">
+    <header class="app-header">
+        <div class="logo-container">
+            <svg class="logo-icon" viewBox="0 0 24 24" width="24" height="24">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4,4" />
+                <path d="M12 2a10 10 0 0 1 10 10" fill="none" stroke="currentColor" stroke-width="2" />
+                <circle cx="12" cy="12" r="4" fill="currentColor" />
+            </svg>
+            <h1 class="logo-text">Aura<span>DICOM</span></h1>
+        </div>
+        <div class="search-bar-container">
+            <input type="text" id="directory-path" placeholder="Enter absolute folder path (e.g. C:/scans or demo_scans)..." value="scans">
+            <button id="scan-btn" class="btn primary-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                Scan Folder
+            </button>
+            <button id="demo-btn" class="btn secondary-btn">
+                Generate Demo
+            </button>
+        </div>
+        <div class="status-indicator">
+            <span class="pulse-dot"></span>
+            <span id="status-text">Connected to localhost</span>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <!-- Sidebar: Study Navigator -->
+        <aside class="sidebar" id="study-sidebar">
+            <div class="panel-header">
+                <h2>Studies Navigator</h2>
+                <span class="badge" id="patient-count">0 Patients</span>
+            </div>
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="patient-search" placeholder="Search patient name, ID, series...">
+            </div>
+            
+            <div class="tree-container" id="navigator-tree">
+                <!-- Directory listing will be populated here -->
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    <p>Enter a folder path and scan to load DICOM files.</p>
+                    <p class="sub-text">Click "Generate Demo" to quickly try it with a 3D head phantom scan!</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Viewport Area -->
+        <main class="viewport-area">
+            <!-- Toolbar -->
+            <div class="viewport-toolbar">
+                <div class="tool-group">
+                    <button class="tool-btn" id="tool-scroll" title="Scroll slices (Mouse Wheel or Drag)">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5l-5-5-5 5M17 19l-5 5-5-5"/></svg>
+                        <span>Scroll</span>
+                    </button>
+                    <button class="tool-btn" id="tool-window" title="Adjust Window Center & Width (Drag)">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20Z" fill="currentColor"/></svg>
+                        <span>Windowing</span>
+                    </button>
+                    <button class="tool-btn active" id="tool-zoom" title="Zoom & Pan (Drag)">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                        <span>Zoom/Pan</span>
+                    </button>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="preset-group">
+                    <label>Presets:</label>
+                    <select id="window-preset">
+                        <option value="default">DICOM Default</option>
+                        <option value="soft">Soft Tissue (C:40 W:400)</option>
+                        <option value="bone">Bone (C:500 W:2000)</option>
+                        <option value="lung">Lung (C:-600 W:1600)</option>
+                        <option value="brain">Brain (C:40 W:80)</option>
+                    </select>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="cine-group">
+                    <button class="icon-btn" id="cine-prev" title="Previous Slice (Left/Up Arrow)">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+                    </button>
+                    <button class="icon-btn" id="cine-play" title="Play loop (Spacebar)">
+                        <svg id="play-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="pause-icon" class="hidden" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+                    <button class="icon-btn" id="cine-next" title="Next Slice (Right/Down Arrow)">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </button>
+                    <span class="cine-speed-label">FPS:</span>
+                    <input type="range" id="cine-fps" min="1" max="30" value="5" title="Adjust playback speed">
+                    <span id="fps-value">5</span>
+                </div>
+
+                <div class="divider"></div>
+
+                <button class="tool-btn" id="reset-btn" title="Reset view">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    <span>Reset</span>
+                </button>
+
+                <div class="divider"></div>
+
+                <button class="tool-btn ai-btn" id="ai-analyze-btn" title="Run AI Diagnostics on current slice">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/><circle cx="12" cy="12" r="4"/><path d="m12 8-2 4h4l-2 4"/></svg>
+                    <span>AI Analyze</span>
+                </button>
+
+                <div class="divider"></div>
+
+                <button class="tool-btn active" id="toggle-tags-btn" title="Toggle DICOM Tags Inspector (T)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+                    <span>Show Tags</span>
+                </button>
+            </div>
+
+            <!-- Viewport Container -->
+            <div class="viewport-container" id="dicom-viewport-container">
+                <!-- Corner Overlays -->
+                <div class="overlay top-left" id="overlay-patient">
+                    <div class="patient-name">NO SERIES LOADED</div>
+                    <div class="patient-id">ID: --</div>
+                    <div class="patient-birth">DOB: --</div>
+                </div>
+                <div class="overlay top-right" id="overlay-study">
+                    <div class="study-date">DATE: --</div>
+                    <div class="study-desc">DESC: --</div>
+                    <div class="modality-badge">MODALITY: --</div>
+                </div>
+                <div class="overlay bottom-left" id="overlay-stats">
+                    <div class="slice-index">Slice: 0 / 0</div>
+                    <div class="slice-loc">Loc: 0.00 mm</div>
+                    <div class="zoom-level">Zoom: 100%</div>
+                    <div class="slice-ai-status" id="slice-ai-status"></div>
+                </div>
+                <div class="overlay bottom-right" id="overlay-window">
+                    <div class="window-c">WC: --</div>
+                    <div class="window-w">WW: --</div>
+                </div>
+
+                <!-- AI Slice Finding Banner overlay -->
+                <div class="ai-finding-banner hidden" id="ai-finding-banner">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span id="ai-finding-banner-text">AI Finding: High-density focal lesion detected...</span>
+                </div>
+
+                <!-- Main Canvas-like Image Container for Pan and Zoom -->
+                <div class="image-wrapper" id="image-wrapper">
+                    <img id="dicom-img" class="dicom-image" alt="DICOM Scan Display" draggable="false" style="display: none;">
+                    <div class="viewport-loader hidden" id="viewport-loader">
+                        <div class="spinner"></div>
+                        <p>Loading Slice...</p>
+                    </div>
+                    <div class="no-image-placeholder" id="viewport-placeholder">
+                        <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="9" cy="9" r="2"/>
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                        </svg>
+                        <h3>Ready to Load Medical Scan</h3>
+                        <p>Select a Patient Series from the list on the left to start viewing slices</p>
+                    </div>
+                </div>
+
+                <!-- Window Center / Width Quick Sliders -->
+                <div class="quick-sliders">
+                    <div class="slider-row">
+                        <span>WC:</span>
+                        <input type="range" id="wc-slider" min="-1000" max="2000" value="40">
+                        <span id="wc-value">40</span>
+                    </div>
+                    <div class="slider-row">
+                        <span>WW:</span>
+                        <input type="range" id="ww-slider" min="1" max="4000" value="400">
+                        <span id="ww-value">400</span>
+                    </div>
+                </div>
+
+                <!-- Bottom Slice Scrubber -->
+                <div class="slice-scrubber-container">
+                    <button class="scrubber-btn" id="scrubber-prev-btn">&lt;</button>
+                    <div class="scrubber-wrapper">
+                        <input type="range" id="slice-range" min="0" max="0" value="0">
+                        <div class="scrubber-markers" id="scrubber-markers"></div>
+                    </div>
+                    <button class="scrubber-btn" id="scrubber-next-btn">&gt;</button>
+                </div>
+
+                <!-- AI Analysis Results Overlay Card -->
+                <div class="ai-results-panel hidden" id="ai-results-panel">
+                    <div class="ai-panel-header">
+                        <div class="ai-title-group">
+                            <span class="ai-glow-dot"></span>
+                            <h3>AI Diagnostics</h3>
+                        </div>
+                        <button class="close-panel-btn" id="close-ai-btn">&times;</button>
+                    </div>
+                    <div class="ai-panel-body">
+                        <div class="ai-status-row">
+                            <span class="ai-status-label">Status:</span>
+                            <span class="ai-status-value" id="ai-status-val">Normal</span>
+                        </div>
+                        <div class="ai-report-box">
+                            <h4>Clinical Findings:</h4>
+                            <p id="ai-findings-text">No scan analyzed yet.</p>
+                        </div>
+                        <div class="ai-recommendation-box">
+                            <h4>Recommendations:</h4>
+                            <p id="ai-rec-text">Click "AI Analyze" to run diagnostics on this slice.</p>
+                        </div>
+                        <div class="ai-findings-list-box hidden" id="ai-findings-list-box">
+                            <h4 id="ai-list-title">Detected Anomalies (0):</h4>
+                            <div class="ai-findings-list" id="ai-findings-list">
+                                <!-- Clickable timeline list -->
+                            </div>
+                        </div>
+                        <div class="ai-controls-row">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="ai-toggle-overlay" checked>
+                                <span class="toggle-slider"></span>
+                                Highlight Anomaly Area
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar: DICOM Tag Inspector -->
+        <aside class="sidebar right-sidebar" id="tag-sidebar">
+            <div class="panel-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="close-tags-btn" id="close-tags-sidebar-btn" title="Collapse Tags Sidebar (T)">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                    <h2>DICOM Tags</h2>
+                </div>
+                <span class="badge" id="tag-count">0 Tags</span>
+            </div>
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="tag-search" placeholder="Search tag, description, value...">
+            </div>
+            
+            <div class="tags-container">
+                <table class="tags-table" id="tags-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 55%;">Tag & Description</th>
+                            <th style="width: 45%;">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tags-tbody">
+                        <tr>
+                            <td colspan="2" class="empty-table-state">No slice selected</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Info/Instruction Overlay Box -->
+    <div class="shortcut-tip">
+        <span>Press <strong>H</strong> for Keyboard Shortcuts & Help</span>
+    </div>
+
+    <!-- Shortcut Modal Dialog -->
+    <div class="modal-overlay hidden" id="help-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Keyboard Shortcuts & Navigation Help</h3>
+                <button class="close-btn" id="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcut-list">
+                    <div class="shortcut-item">
+                        <kbd>Spacebar</kbd>
+                        <span>Toggle Loop Playback (Cine Loop)</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Left Arrow</kbd> / <kbd>Up Arrow</kbd> / <kbd>Mouse Wheel Up</kbd>
+                        <span>Previous Slice</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Right Arrow</kbd> / <kbd>Down Arrow</kbd> / <kbd>Mouse Wheel Down</kbd>
+                        <span>Next Slice</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>W</kbd> / <kbd>S</kbd>
+                        <span>Adjust Window Center (WC) +/-</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>A</kbd> / <kbd>D</kbd>
+                        <span>Adjust Window Width (WW) +/-</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Double Click</kbd>
+                        <span>Reset Zoom, Pan and Windowing</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Left Click + Drag</kbd>
+                        <span>
+                            <strong>Active Tool Dependent:</strong><br>
+                            • <em>Scroll Tool:</em> Drag up/down to scrub slices<br>
+                            • <em>Windowing Tool:</em> Drag left/right (width), up/down (center)<br>
+                            • <em>Zoom/Pan Tool:</em> Drag to pan image (hold Shift to Zoom)
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

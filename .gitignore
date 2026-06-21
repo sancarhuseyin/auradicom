@@ -1,0 +1,22 @@
+# Virtual environment
+venv/
+
+# Patient medical data (extremely critical to ignore for privacy)
+scans/
+demo_scans/
+test.dcm
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Agent customizations and temporary run files
+.agents/
+.gemini/
+*.log
+
+# IDE files
+.vscode/
+.idea/
