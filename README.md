@@ -18,15 +18,11 @@ If you want to view, manage, and scan your DICOM files—your private personal d
 
 ---
 
-## 📸 Interface Screenshots & Gallery
+## 📸 Interface Screenshot
 
-Here are mockups of the AuraDICOM viewer interface displaying medical scans with local AI-detected anomalies:
+Here is a screenshot of the AuraDICOM viewer interface running on localhost:
 
-### 1. Spine CT View with Localized Density Outlier
-![AuraDICOM Spine CT Interface](docs/images/viewer_interface_main.jpg)
-
-### 2. Brain CT Phantom View with AI-Detected Dense Lesion
-![AuraDICOM Brain CT Phantom Interface](docs/images/viewer_interface_xray.jpg)
+![AuraDICOM Interface](screenshot.jpg)
 
 ---
 
