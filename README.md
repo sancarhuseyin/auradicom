@@ -25,8 +25,8 @@ Here are mockups of the AuraDICOM viewer interface displaying medical scans with
 ### 1. Spine CT View with Localized Density Outlier
 ![AuraDICOM Spine CT Interface](docs/images/viewer_interface_main.jpg)
 
-### 2. Chest X-Ray View with AI Lung Nodule Overlay
-![AuraDICOM Chest X-Ray Interface](docs/images/viewer_interface_xray.jpg)
+### 2. Brain CT Phantom View with AI-Detected Dense Lesion
+![AuraDICOM Brain CT Phantom Interface](docs/images/viewer_interface_xray.jpg)
 
 ---
 
